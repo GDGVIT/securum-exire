@@ -33,7 +33,7 @@
 <table>
 	<tr align="center">
 		<td>
-		John Doe
+		Mayank Kumar
 		<p align="center">
 			<img src = "https://dscvit.com/images/techteam/mayank.jpg" width="150" height="150" alt="Mayank Kumar">
 		</p>
