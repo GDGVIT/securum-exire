@@ -2,8 +2,8 @@
 <a href="https://dscvit.com">
 	<img src="https://user-images.githubusercontent.com/30529572/92081025-fabe6f00-edb1-11ea-9169-4a8a61a5dd45.png" alt="DSC VIT"/>
 </a>
-	<h2 align="center"> < Insert Project Title Here > </h2>
-	<h4 align="center"> < Insert Project Description Here > <h4>
+	<h2 align="center"> Securum Exire </h2>
+	<h4 align="center"> A extensive solution to prevent security credential leaks, at response phase of a request-response cycle. <h4>
 </p>
 
 ---
@@ -15,31 +15,18 @@
 
 
 ## Features
-- [ ]  < feature >
-- [ ]  < feature >
-- [ ]  < feature >
-- [ ]  < feature >
+- [ ]  Telegram Bot to notify of leaks.
+- [ ]  Message queue to shed of load at peak hours.
+- [ ]  Fast and Effective Algoritm to find credentials in a particular response.
+- [ ]  System sycronization for credentials available on the system. 
 
 <br>
 
 ## Dependencies
- - < dependency >
- - < dependency >
+ - Rust
+ - Traefik
+ - Telegram Bot
 
-
-## Running
-
-
-< directions to install > 
-```bash
-< insert code >
-```
-
-< directions to execute >
-
-```bash
-< insert code >
-```
 
 ## Contributors
 
@@ -48,13 +35,13 @@
 		<td>
 		John Doe
 		<p align="center">
-			<img src = "https://dscvit.com/images/dsc-logo-square.svg" width="150" height="150" alt="Your Name Here (Insert Your Image Link In Src">
+			<img src = "https://dscvit.com/images/techteam/mayank.jpg" width="150" height="150" alt="Mayank Kumar">
 		</p>
 			<p align="center">
-				<a href = "https://github.com/person1">
+				<a href = "https://github.com/mayankkumar2">
 					<img src = "http://www.iconninja.com/files/241/825/211/round-collaboration-social-github-code-circle-network-icon.svg" width="36" height = "36" alt="GitHub"/>
 				</a>
-				<a href = "https://www.linkedin.com/in/person1">
+				<a href="https://www.linkedin.com/in/mayankk2">
 					<img src = "http://www.iconninja.com/files/863/607/751/network-linkedin-social-connection-circular-circle-media-icon.svg" width="36" height="36" alt="LinkedIn"/>
 				</a>
 			</p>
