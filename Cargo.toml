@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 tokio = { version = "1.2.0", features = ["full"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+simple-error = "0.2.3"

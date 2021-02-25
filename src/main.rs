@@ -1,6 +1,6 @@
 use tokio::process::Command;
 use std::ffi::OsStr;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::collections::{BTreeMap};
 
 
@@ -19,13 +19,21 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
     Ok(m)
 }
 
+async fn save_file(h: &BTreeMap<String, String>) -> Result<(), Box<dyn std::error::Error>>{
+    let z = serde_json::to_string(&h);
+    if let Ok(z) = z {
+        let mut f = tokio::fs::File::create("credentials.json").await?;
+        f.write_all(z.as_bytes()).await?;
+        println!("Credentials written at path [{}]", "credentials.json");
+    } else {
+        return Err(Box::new(simple_error::SimpleError::new("error_occurred_while_marshaling")));
+    }
+    Ok(())
+}
+
 
 #[tokio::main]
 async fn main() {
-
-    
-
-
 
     let home_dir_path = std::env::var("HOME");
     let m;
@@ -61,7 +69,11 @@ async fn main() {
                         });
                     }
                 }
-                println!("{:?}", serde_json::to_string(&h));
+                let res = save_file(&h).await;
+                if res.is_err() {
+                    println!("error occurred while saving the credentials.");
+                    std::process::exit(1);
+                }
             } else {
                 eprintln!("error while processing output from find!");
                 std::process::exit(1);
