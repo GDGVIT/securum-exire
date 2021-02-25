@@ -2,7 +2,7 @@ use tokio::process::Command;
 use std::ffi::OsStr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::collections::{BTreeMap};
-
+use clap::{Arg, App};
 
 async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::error::Error>>{
     let mut f = tokio::fs::File::open(p).await?;
@@ -19,12 +19,13 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
     Ok(m)
 }
 
-async fn save_file(h: &BTreeMap<String, String>) -> Result<(), Box<dyn std::error::Error>>{
+async fn save_file(h: &BTreeMap<String, String>, n: String) -> Result<(), Box<dyn std::error::Error>>{
     let z = serde_json::to_string(&h);
+    let path = n + "/credentials.json";
     if let Ok(z) = z {
-        let mut f = tokio::fs::File::create("credentials.json").await?;
+        let mut f = tokio::fs::File::create(path.clone()).await?;
         f.write_all(z.as_bytes()).await?;
-        println!("Credentials written at path [{}]", "credentials.json");
+        println!("Credentials written at path [{}]", path);
     } else {
         return Err(Box::new(simple_error::SimpleError::new("error_occurred_while_marshaling")));
     }
@@ -34,15 +35,42 @@ async fn save_file(h: &BTreeMap<String, String>) -> Result<(), Box<dyn std::erro
 
 #[tokio::main]
 async fn main() {
-
     let home_dir_path = std::env::var("HOME");
-    let m;
-    if let Ok(x) = home_dir_path {
-        m = x;
-    } else {
-        eprintln!("error while fetching HOME variable!");
-        std::process::exit(1);
+    let mut m= String::new();
+    let matches = App::new("Securum Exire")
+        .version("1.0")
+        .author("Mayank Kumar <mayank22oct@gmail.com>")
+        .about("CLI to run crons searching for credentials on a system")
+        .arg(Arg::new("out")
+            .short('o')
+            .long("out")
+            .default_value(".")
+            .required(false)
+            .takes_value(true))
+        .arg(Arg::new("path")
+            .short('p')
+            .long("path")
+            .default_value("HOME")
+            .required(false)
+            .takes_value(true))
+        .get_matches();
+    if let Some(p) = matches.value_of("path") {
+        if p == "HOME" {
+            if let Ok(x) = home_dir_path {
+                m = x;
+            } else {
+                eprintln!("error while fetching HOME variable!");
+                std::process::exit(1);
+            }
+        } else {
+            m = p.to_string();
+        }
     }
+    let mut n = String::new();
+    if let Some(p) = matches.value_of("out") {
+        n = p.to_string();
+    }
+
     let cmd_line_inp = [
         OsStr::new(m.as_str()),
         OsStr::new("-iname"),
@@ -69,7 +97,7 @@ async fn main() {
                         });
                     }
                 }
-                let res = save_file(&h).await;
+                let res = save_file(&h, n).await;
                 if res.is_err() {
                     println!("error occurred while saving the credentials.");
                     std::process::exit(1);
