@@ -1,12 +1,12 @@
-use tokio::process::Command;
+use clap::{App, Arg};
+use std::collections::BTreeMap;
 use std::ffi::OsStr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use std::collections::{BTreeMap};
-use clap::{Arg, App};
+use tokio::process::Command;
 
-async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::error::Error>>{
+async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::error::Error>> {
     let mut f = tokio::fs::File::open(p).await?;
-    let mut contents= String::new();
+    let mut contents = String::new();
     f.read_to_string(&mut contents).await?;
     let lines_of_file = contents.split("\n").collect::<Vec<&str>>();
     let mut m = BTreeMap::new();
@@ -19,7 +19,10 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
     Ok(m)
 }
 
-async fn save_file(h: &BTreeMap<String, String>, n: String) -> Result<(), Box<dyn std::error::Error>>{
+async fn save_file(
+    h: &BTreeMap<String, String>,
+    n: String,
+) -> Result<(), Box<dyn std::error::Error>> {
     let z = serde_json::to_string(&h);
     let path = n + "/credentials.json";
     if let Ok(z) = z {
@@ -27,32 +30,37 @@ async fn save_file(h: &BTreeMap<String, String>, n: String) -> Result<(), Box<dy
         f.write_all(z.as_bytes()).await?;
         println!("Credentials written at path [{}]", path);
     } else {
-        return Err(Box::new(simple_error::SimpleError::new("error_occurred_while_marshaling")));
+        return Err(Box::new(simple_error::SimpleError::new(
+            "error_occurred_while_marshaling",
+        )));
     }
     Ok(())
 }
 
-
 #[tokio::main]
 async fn main() {
     let home_dir_path = std::env::var("HOME");
-    let mut m= String::new();
+    let mut m = String::new();
     let matches = App::new("Securum Exire")
         .version("1.0")
         .author("Mayank Kumar <mayank22oct@gmail.com>")
         .about("CLI to run crons searching for credentials on a system")
-        .arg(Arg::new("out")
-            .short('o')
-            .long("out")
-            .default_value(".")
-            .required(false)
-            .takes_value(true))
-        .arg(Arg::new("path")
-            .short('p')
-            .long("path")
-            .default_value("HOME")
-            .required(false)
-            .takes_value(true))
+        .arg(
+            Arg::new("out")
+                .short('o')
+                .long("out")
+                .default_value(".")
+                .required(false)
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("path")
+                .short('p')
+                .long("path")
+                .default_value("HOME")
+                .required(false)
+                .takes_value(true),
+        )
         .get_matches();
     if let Some(p) = matches.value_of("path") {
         if p == "HOME" {
@@ -74,12 +82,9 @@ async fn main() {
     let cmd_line_inp = [
         OsStr::new(m.as_str()),
         OsStr::new("-iname"),
-        OsStr::new(".env")
+        OsStr::new(".env"),
     ];
-    let cmd = Command::new("find")
-        .args(&cmd_line_inp)
-        .output()
-        .await;
+    let cmd = Command::new("find").args(&cmd_line_inp).output().await;
 
     let mut h = BTreeMap::new();
 
@@ -88,10 +93,10 @@ async fn main() {
             let out = std::str::from_utf8(x.stdout.as_slice());
             if let Ok(soo) = out {
                 let mut paths = soo.split("\n").collect::<Vec<&str>>();
-                paths.resize(paths.len()-1, "");
+                paths.resize(paths.len() - 1, "");
                 for p in paths {
                     let x = read_file(p).await;
-                    if let Ok( s) = x {
+                    if let Ok(s) = x {
                         s.into_iter().for_each(|(k, v)| {
                             h.insert(k, v);
                         });

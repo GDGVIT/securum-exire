@@ -1,12 +1,12 @@
-use crate::utils::load_credentials;
-use std::sync::{Arc, Mutex};
-use std::cell::RefCell;
-use hotwatch::Event;
 use crate::route::check;
-use actix_web::{web, HttpServer, App};
+use crate::utils::load_credentials;
 use actix_web::middleware::Logger;
-use tokio::sync::mpsc;
+use actix_web::{web, App, HttpServer};
+use hotwatch::Event;
+use std::cell::RefCell;
+use std::sync::{Arc, Mutex};
 use tokio::signal::unix::{signal, SignalKind};
+use tokio::sync::mpsc;
 
 use crate::leak_model::LeakModel;
 use futures::future::Either;
@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>) {
     let mut watcher = hotwatch::Hotwatch::new().expect("watcher failed to initialize");
-    let x =watcher.watch("./credentials.json", move |_e: Event| {
+    let x = watcher.watch("./credentials.json", move |_e: Event| {
         let cr = watcher_cred_copy.clone();
         let b = cr.lock().unwrap();
         println!("credentials changed updating the path!");
@@ -30,7 +30,6 @@ fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>
         eprintln!("watcher thread failed to initialize...");
     }
 }
-
 
 pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -59,11 +58,9 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
                     break;
                 }
             };
-
         }
         ()
     });
-
 
     let server = HttpServer::new(move || {
         App::new()
@@ -72,8 +69,8 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             .wrap(Logger::default())
             .route("/check", web::post().to(check))
     })
-        .bind("0.0.0.0:8080")?
-        .run();
+    .bind("0.0.0.0:8080")?
+    .run();
     let _ = futures::future::join(server, handler).await;
     Ok(())
 }
