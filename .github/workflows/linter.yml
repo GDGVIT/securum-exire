@@ -50,6 +50,7 @@ jobs:
       - name: Lint Code Base
         uses: github/super-linter@v3
         env:
+          VALIDATE_RUST_2015: false
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_MARKDOWN: false
           DEFAULT_BRANCH: master
