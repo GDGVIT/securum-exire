@@ -6,10 +6,19 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
+use ring::digest::{
+    Context,
+    Digest,
+    SHA256
+};
+use crate::utils::sha256_encode;
+use redis::Commands;
+
 
 pub async fn check(
     data: actix_web::web::Data<Arc<Mutex<RefCell<HashMap<String, String>>>>>,
     _chan: actix_web::web::Data<tokio::sync::mpsc::Sender<LeakModel>>,
+    redis_client : actix_web::web::Data<redis::Client>,
     mut payload: web::Payload,
     req: actix_web::HttpRequest,
 ) -> impl Responder {
@@ -26,6 +35,21 @@ pub async fn check(
         }
     }
     let c = &body[..];
+    let sha256_hash = sha256_encode(c);
+    let conn = redis_client.get_connection();
+    let is_leak = match conn {
+        Ok(mut conn) => {
+            conn.get(sha256_hash.clone()).unwrap_or(false)
+        },
+        Err(_) => {
+            false
+        }
+    };
+
+    if is_leak {
+        return HttpResponse::Forbidden();
+    }
+
     let req_payload = String::from_utf8(Vec::from(c)).unwrap();
     let mut f = false;
 
@@ -37,7 +61,6 @@ pub async fn check(
             tokio::task::spawn(async move {
                 let x = c;
                 let b = d.contains(&x);
-
                 return (b, key);
             })
         })
@@ -64,6 +87,7 @@ pub async fn check(
             .send(LeakModel {
                 endpoint: endpoint.to_string(),
                 leaked_credentials: leaks,
+                payload_hash: sha256_hash
             })
             .await;
         HttpResponse::Forbidden()

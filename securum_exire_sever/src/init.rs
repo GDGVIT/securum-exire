@@ -11,6 +11,7 @@ use tokio::sync::mpsc;
 use crate::leak_model::LeakModel;
 use futures::future::Either;
 use std::collections::HashMap;
+use redis::{Commands, RedisResult};
 
 fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>) {
     let mut watcher = hotwatch::Hotwatch::new().expect("watcher failed to initialize");
@@ -32,6 +33,9 @@ fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>
 }
 
 pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
+    let redis_client = redis::Client::open("redis://localhost")
+        .expect("unable to connect to redis server");
+
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let (tx, mut rx) = mpsc::channel::<LeakModel>(1024);
     let cred = load_credentials("./credentials.json".to_string());
@@ -40,8 +44,10 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     start_watcher(watcher_cred_copy);
 
     let mut stream = signal(SignalKind::interrupt())?;
-
+    let client_clone = redis_client.clone();
     let handler = tokio::spawn(async move {
+        let client = client_clone.clone();
+        let mut conn = client.get_connection().expect("unable to connect to redis!");
         loop {
             let rec = rx.recv();
             let hang = stream.recv();
@@ -50,6 +56,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             match futures::future::select(rec, hang).await {
                 Either::Left((e, _)) => {
                     if let Some(v) = e {
+                        let _ : RedisResult<()>= conn.set(v.payload_hash.clone(), true);
                         println!("{:?}", v);
                     }
                 }
@@ -65,6 +72,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     let server = HttpServer::new(move || {
         App::new()
             .data(cred_share_obj.clone())
+            .data(redis_client.clone())
             .data(tx.clone())
             .wrap(Logger::default())
             .route("/check", web::post().to(check))
