@@ -3,7 +3,7 @@ use actix_web::{web, HttpResponse, Responder};
 use futures_util::stream::StreamExt as _;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ops::Deref;
+use std::ops::{Deref, Add};
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
 use ring::digest::{
@@ -14,6 +14,29 @@ use ring::digest::{
 use crate::utils::sha256_encode;
 use redis::Commands;
 
+pub async fn check_endpoint_status(redis_client : actix_web::web::Data<redis::Client>, req: actix_web::HttpRequest)
+                                   -> impl Responder {
+    let endpoint = req.headers().get("endpoint");
+    let endpoint = match endpoint {
+        Some(v) => v.to_str().unwrap(),
+        None => "",
+    };
+    let conn = redis_client.get_connection();
+    let is_blocked = match conn {
+        Ok(mut conn) => {
+            conn.get((String::from(endpoint)).add("_blocked_endpoint")).unwrap_or(false)
+        },
+        Err(_) => {
+            false
+        }
+    };
+    if is_blocked {
+        HttpResponse::Forbidden()
+    } else {
+        HttpResponse::Ok()
+    }
+
+}
 
 pub async fn check(
     data: actix_web::web::Data<Arc<Mutex<RefCell<HashMap<String, String>>>>>,
