@@ -33,7 +33,7 @@ fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>
         eprintln!("watcher thread failed to initialize...");
     }
 }
-
+// TODO: Move to utils
 async fn report_leak(leak: &LeakModel) {
     // let payload = serde_json::to_string(&leak).unwrap_or("{}".into());
 
