@@ -1,4 +1,4 @@
-use crate::route::{check, check_endpoint_status, block_endpoint, register_signal_server, get_all_blocked};
+use crate::route::{check, check_endpoint_status, block_endpoint, register_signal_server, get_all_blocked, unblock_endpoint};
 use crate::utils::load_credentials;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
@@ -12,8 +12,6 @@ use futures::future::Either;
 use std::collections::HashMap;
 use redis::{AsyncCommands, RedisResult, aio::Connection};
 use std::ops::Add;
-use reqwest::{Response, Error};
-use serde::de::Unexpected::Str;
 
 fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>) {
     let mut watcher = hotwatch::Hotwatch::new().expect("watcher failed to initialize");
@@ -38,8 +36,9 @@ async fn report_leak(conn: &mut Connection, leak: &LeakModel) {
     let _ : RedisResult<()> = conn.set(leak.endpoint_hash.clone().add("_endpoint"), &leak.endpoint).await;
     let secret: String= conn.get(String::from("SECURUM_EXIRE_SIGNAL_SERVER_SECRET")).await.unwrap_or(String::from(""));
     let client = reqwest::Client::new();
-    let response = client.request(reqwest::Method::POST,
-                                  "http://localhost:9000/report/leak")
+    let response = client.request(
+        reqwest::Method::POST,
+        "http://localhost:9000/report/leak")
         .header("SECRET", secret)
         .json(&leak)
         .send()
@@ -103,6 +102,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             .route("/block_endpoint", web::get().to(block_endpoint))
             .route("/register_signal_server", web::get().to(register_signal_server))
             .route("/get_all_blocked_endpoints", web::get().to(get_all_blocked))
+            .route("/unblock_endpoint", web::get().to(unblock_endpoint))
     })
     .bind("0.0.0.0:8080")?
     .run();

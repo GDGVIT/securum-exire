@@ -8,8 +8,9 @@ use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
 use crate::utils::{sha256_encode, md5_encode};
 use redis::{AsyncCommands, RedisResult};
-use std::result::Result::Ok;
-use serde::de::Unexpected::Map;
+
+
+
 
 pub async fn register_signal_server(redis_client : actix_web::web::Data<redis::Client>, req: actix_web::HttpRequest)
 -> impl Responder {
@@ -51,8 +52,35 @@ pub async fn get_all_blocked(redis_client : actix_web::web::Data<redis::Client>)
         HttpResponse::InternalServerError()
             .finish()
     }
+}
 
-    // _blocked_endpoint
+pub async fn unblock_endpoint(redis_client:  actix_web::web::Data<redis::Client>, req: actix_web::HttpRequest) -> impl Responder {
+    let endpoint_hash = req.headers().get("endpoint_hash");
+    let endpoint_hash = match endpoint_hash {
+        Some(v) => v.to_str().unwrap(),
+        None => "",
+    };
+    let con = redis_client.get_async_connection().await;
+    println!("*{}*_blocked_endpoint", endpoint_hash);
+
+    if let Ok(mut con) = con {
+        let endpoint_keys: Vec<String>=redis::cmd("KEYS").arg(format!("*{}*_blocked_endpoint", endpoint_hash)).query_async(&mut con).await.unwrap_or(vec![]);
+        let result: RedisResult<u64> = redis::cmd("DEL")
+            .arg(endpoint_keys)
+            .query_async(&mut con)
+            .await;
+        if let Ok(_) = result {
+            println!("result: {}", result.unwrap());
+            HttpResponse::Ok()
+                .finish()
+        } else {
+            HttpResponse::NotFound()
+                .finish()
+        }
+    } else {
+        HttpResponse::InternalServerError()
+            .finish()
+    }
 }
 
 pub async fn check_endpoint_status(redis_client : actix_web::web::Data<redis::Client>, req: actix_web::HttpRequest)
