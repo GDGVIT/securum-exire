@@ -1,4 +1,4 @@
-use crate::route::{check, check_endpoint_status};
+use crate::route::{check, check_endpoint_status, block_endpoint, register_signal_server, get_all_blocked};
 use crate::utils::load_credentials;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
@@ -7,13 +7,13 @@ use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::mpsc;
-
 use crate::leak_model::LeakModel;
 use futures::future::Either;
 use std::collections::HashMap;
-use redis::{Commands, RedisResult};
+use redis::{AsyncCommands, RedisResult, aio::Connection};
 use std::ops::Add;
 use reqwest::{Response, Error};
+use serde::de::Unexpected::Str;
 
 fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>) {
     let mut watcher = hotwatch::Hotwatch::new().expect("watcher failed to initialize");
@@ -34,13 +34,13 @@ fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>
     }
 }
 // TODO: Move to utils
-async fn report_leak(leak: &LeakModel) {
-    // let payload = serde_json::to_string(&leak).unwrap_or("{}".into());
-
+async fn report_leak(conn: &mut Connection, leak: &LeakModel) {
+    let _ : RedisResult<()> = conn.set(leak.endpoint_hash.clone().add("_endpoint"), &leak.endpoint).await;
+    let secret: String= conn.get(String::from("SECURUM_EXIRE_SIGNAL_SERVER_SECRET")).await.unwrap_or(String::from(""));
     let client = reqwest::Client::new();
-    // let request =
     let response = client.request(reqwest::Method::POST,
                                   "http://localhost:9000/report/leak")
+        .header("SECRET", secret)
         .json(&leak)
         .send()
         .await;
@@ -69,7 +69,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
     let client_clone = redis_client.clone();
     let handler = tokio::spawn(async move {
         let client = client_clone.clone();
-        let mut conn = client.get_connection().expect("unable to connect to redis!");
+        let mut conn = client.get_async_connection().await.expect("unable to connect to redis!");
         loop {
             let rec = rx.recv();
             let hang = stream.recv();
@@ -78,9 +78,8 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             match futures::future::select(rec, hang).await {
                 Either::Left((e, _)) => {
                     if let Some(v) = e {
-                        let _ : RedisResult<()>= conn.set(v.payload_hash.clone(), true);
-                        let _ : RedisResult<()>= conn.set(v.endpoint.clone().add("_blocked_endpoint"), true);
-                        report_leak(&v).await;
+                        let _ : RedisResult<()>= conn.set(v.payload_hash.clone(), true).await;
+                        report_leak(&mut conn, &v).await;
                         println!("leak detected: {:?}", v);
                     }
                 }
@@ -101,6 +100,9 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             .wrap(Logger::default())
             .route("/check", web::post().to(check))
             .route("/check_endpoint", web::get().to(check_endpoint_status))
+            .route("/block_endpoint", web::get().to(block_endpoint))
+            .route("/register_signal_server", web::get().to(register_signal_server))
+            .route("/get_all_blocked_endpoints", web::get().to(get_all_blocked))
     })
     .bind("0.0.0.0:8080")?
     .run();

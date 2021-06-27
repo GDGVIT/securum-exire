@@ -1,11 +1,6 @@
 use std::collections::HashMap;
-use ring::digest::{
-    Context,
-    Digest,
-    SHA256
-};
-use std::io::Read;
-use data_encoding::{HEXUPPER, HEXLOWER};
+use ring::digest::{Context, SHA256};
+use data_encoding::{HEXLOWER};
 
 pub fn load_credentials(path: String) -> HashMap<String, String> {
     let f = std::fs::read(path);
@@ -26,5 +21,10 @@ pub fn sha256_encode(b: &[u8]) -> String {
     let _ = ctx.update(b);
     let digest = ctx.finish();
     HEXLOWER.encode(digest.as_ref())
+}
+
+pub fn md5_encode(b: &[u8]) -> String {
+    let hasher = md5::compute(b);
+    HEXLOWER.encode(&hasher.0)
 }
 

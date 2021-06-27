@@ -340,12 +340,15 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "combine"
-version = "4.5.2"
+version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc4369b5e4c0cddf64ad8981c0111e7df4f7078f4d6ba98fb31f2e17c4c57b7e"
+checksum = "a2d47c1b11006b87e492b53b313bb699ce60e16613c4dddaa91f8f7c220ab2fa"
 dependencies = [
  "bytes",
+ "futures-util",
  "memchr",
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]
@@ -950,6 +953,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 
 [[package]]
+name = "md5"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
+
+[[package]]
 name = "memchr"
 version = "2.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1294,16 +1303,21 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.20.1"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a32cb439c4e89c1e6415e5b3b23d9d8cc6dc1bf5a8cade19adbd5418de803be"
+checksum = "d4f0ceb2ec0dd769483ecd283f6615aa83dcd0be556d5294c6e659caefe7cc54"
 dependencies = [
  "async-trait",
+ "bytes",
  "combine",
  "dtoa",
+ "futures-util",
  "itoa",
  "percent-encoding",
+ "pin-project-lite",
  "sha1",
+ "tokio",
+ "tokio-util",
  "url",
 ]
 
@@ -1465,6 +1479,7 @@ dependencies = [
  "futures",
  "futures-util",
  "hotwatch",
+ "md5",
  "redis",
  "reqwest",
  "ring",
