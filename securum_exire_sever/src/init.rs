@@ -17,22 +17,25 @@ use crate::leak_model::LeakModel;
 use futures::future::Either;
 use redis::{AsyncCommands, RedisResult};
 use crate::watcher::start_watcher;
+use crate::config::SecExireConf;
 
-pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
-    let redis_client = redis::Client::open("redis://localhost")
+pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::error::Error>> {
+    let redis_client = redis::Client::open(conf.redis_url.clone())
         .expect("unable to connect to redis server");
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let (tx, mut rx) = mpsc::channel::<LeakModel>(1024);
-    let cred = load_credentials("./credentials.json".to_string());
+    let cred = load_credentials(conf.secrets_file_path.clone());
     let cred_share_obj = Arc::new(Mutex::new(RefCell::new(cred)));
     let watcher_cred_copy = cred_share_obj.clone();
-    start_watcher(watcher_cred_copy);
+    start_watcher(watcher_cred_copy, conf.clone());
 
     let mut stream = signal(SignalKind::interrupt())?;
     let client_clone = redis_client.clone();
+    let conf_clone = conf.clone();
     let handler = tokio::spawn(async move {
         let client = client_clone.clone();
+        let conf = conf_clone.clone();
         let conn = client.get_async_connection().await;
         if conn.is_err() {
             colour::e_red_ln!("error: unable to connect to redis server");
@@ -48,7 +51,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
                 Either::Left((e, _)) => {
                     if let Some(v) = e {
                         let _ : RedisResult<()>= conn.set(v.payload_hash.clone(), true).await;
-                        report_leak(&mut conn, &v).await;
+                        report_leak(&mut conn, &v, conf.clone()).await;
                         colour::e_yellow_ln!("leak detected: {:?}", v);
                     }
                 }
@@ -60,9 +63,11 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
         }
         ()
     });
-
+    let conf_clone = conf.clone();
+    let listen_at = &conf.listening_port_address;
     let server = HttpServer::new(move || {
         App::new()
+            .data(conf_clone.clone())
             .data(cred_share_obj.clone())
             .data(redis_client.clone())
             .data(tx.clone())
@@ -74,7 +79,7 @@ pub async fn start() -> Result<(), Box<dyn std::error::Error>> {
             .route("/get_all_blocked_endpoints", web::get().to(get_all_blocked))
             .route("/unblock_endpoint", web::get().to(unblock_endpoint))
     })
-    .bind("0.0.0.0:8080")?
+    .bind(listen_at)?
     .run();
     let _ = futures::future::join(server, handler).await;
     Ok(())

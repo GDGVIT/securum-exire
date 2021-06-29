@@ -1,13 +1,19 @@
+use crate::config::load_conf;
+use crate::init::start;
+
 mod init;
 mod leak_model;
 mod route;
 mod utils;
 mod watcher;
-use init::start;
+pub mod config;
 
 #[actix_web::main]
 async fn main() {
-    match start().await {
+
+    let conf = load_conf("production".to_string());
+    println!("{:?}", conf);
+    match start(conf).await {
         Ok(_) => {}
         Err(_) => {
             colour::e_red_ln!("error occurred while starting the server!")

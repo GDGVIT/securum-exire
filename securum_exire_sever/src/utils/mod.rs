@@ -5,6 +5,8 @@ use redis::{RedisResult, AsyncCommands};
 use redis::aio::Connection;
 use crate::leak_model::LeakModel;
 use std::ops::Add;
+use std::sync::Arc;
+use crate::config::SecExireConf;
 
 pub fn load_credentials(path: String) -> HashMap<String, String> {
     let f = std::fs::read(path);
@@ -32,13 +34,14 @@ pub fn md5_encode(b: &[u8]) -> String {
     HEXLOWER.encode(&hasher.0)
 }
 
-pub async fn report_leak(conn: &mut Connection, leak: &LeakModel) {
+pub async fn report_leak(conn: &mut Connection, leak: &LeakModel, conf: Arc<Box<SecExireConf>>) {
+    let endpoint = conf.signal_server_address.clone();
     let _ : RedisResult<()> = conn.set(leak.endpoint_hash.clone().add("_endpoint"), &leak.endpoint).await;
     let secret: String= conn.get(String::from("SECURUM_EXIRE_SIGNAL_SERVER_SECRET")).await.unwrap_or(String::from(""));
     let client = reqwest::Client::new();
     let response = client.request(
         reqwest::Method::POST,
-        "http://localhost:9000/report/leak")
+        endpoint)
         .header("SECRET", secret)
         .json(&leak)
         .send()
