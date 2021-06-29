@@ -7,12 +7,12 @@ mod route;
 mod utils;
 mod watcher;
 pub mod config;
+mod cmd;
 
 #[actix_web::main]
 async fn main() {
-
-    let conf = load_conf("production".to_string());
-    println!("{:?}", conf);
+    let config_path = cmd::check_env();
+    let conf = load_conf("production".to_string(), config_path);
     match start(conf).await {
         Ok(_) => {}
         Err(_) => {

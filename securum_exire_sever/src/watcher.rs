@@ -2,10 +2,11 @@ use crate::utils::load_credentials;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{Mutex, Arc};
-use hotwatch::Event;
+use hotwatch::{Event, Hotwatch};
 use crate::config::SecExireConf;
 
-pub fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>, conf: Arc<Box<SecExireConf>>) {
+pub fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String>>>>, conf: Arc<Box<SecExireConf>>)
+-> Box<Hotwatch>{
     let mut watcher = hotwatch::Hotwatch::new().expect("watcher failed to initialize");
     let path = conf.secrets_file_path.clone();
     let x = watcher.watch(path.clone(), move |_e: Event| {
@@ -23,4 +24,5 @@ pub fn start_watcher(watcher_cred_copy: Arc<Mutex<RefCell<HashMap<String, String
     } else {
         colour::e_red_ln!("watcher thread failed to initialize...");
     }
+    return Box::new(watcher);
 }

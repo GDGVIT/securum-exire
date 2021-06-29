@@ -38,8 +38,8 @@ fn sanitize_conf(conf: &Box<SecExireConf>) -> (bool, String) {
     (true, "successful".to_string())
 }
 
-pub fn load_conf(env: String) -> Arc<Box<SecExireConf>>{
-    let res = std::fs::read_to_string("./securum.toml");
+pub fn load_conf(env: String, config_loc: String) -> Arc<Box<SecExireConf>>{
+    let res = std::fs::read_to_string(config_loc);
     if res.is_err() {
         colour::e_red_ln!("error: unable to open config file");
         std::process::exit(1);

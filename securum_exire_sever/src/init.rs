@@ -28,7 +28,7 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
     let cred = load_credentials(conf.secrets_file_path.clone());
     let cred_share_obj = Arc::new(Mutex::new(RefCell::new(cred)));
     let watcher_cred_copy = cred_share_obj.clone();
-    start_watcher(watcher_cred_copy, conf.clone());
+    let _w = start_watcher(watcher_cred_copy, conf.clone());
 
     let mut stream = signal(SignalKind::interrupt())?;
     let client_clone = redis_client.clone();

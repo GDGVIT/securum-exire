@@ -1,0 +1,5 @@
+[production]
+redis_url = "redis://localhost"
+secrets_file_path = "/home/mayankk/.securum_exire/credentials.json"
+listening_port_address = "0.0.0.0:1567"
+signal_server_address = "https://localhost:6234"
