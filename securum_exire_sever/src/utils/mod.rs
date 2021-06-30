@@ -36,7 +36,7 @@ pub fn md5_encode(b: &[u8]) -> String {
 
 pub async fn report_leak(conn: &mut Connection, leak: &LeakModel, conf: Arc<Box<SecExireConf>>) {
     let endpoint = conf.signal_server_address.clone();
-    let endpoint = format!("{}/report/leak", endpoint);
+    let endpoint = format!("http://{}/report/leak", endpoint);
     let _ : RedisResult<()> = conn.set(leak.endpoint_hash.clone().add("_endpoint"), &leak.endpoint).await;
     let secret: String= conn.get(String::from("SECURUM_EXIRE_SIGNAL_SERVER_SECRET")).await.unwrap_or(String::from(""));
     let client = reqwest::Client::new();

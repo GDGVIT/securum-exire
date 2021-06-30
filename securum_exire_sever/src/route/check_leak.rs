@@ -8,6 +8,7 @@ use redis::AsyncCommands;
 use crate::utils::{md5_encode, sha256_encode};
 use futures_util::StreamExt;
 use tokio::task::JoinHandle;
+use aho_corasick::AhoCorasick;
 
 pub async fn check(
     data: actix_web::web::Data<Arc<Mutex<RefCell<HashMap<String, String>>>>>,
@@ -18,7 +19,7 @@ pub async fn check(
 ) -> impl Responder {
     let data = data.deref().lock().unwrap();
     let data = data.borrow();
-    let keys = data.keys();
+    let keys = data.keys().map(|v| v).collect::<Vec<&String>>();
     let endpoint = req.headers().get("endpoint");
     let endpoint = match endpoint {
         Some(v) => v.to_str().unwrap(),
@@ -60,31 +61,44 @@ pub async fn check(
     }
 
     let req_payload = String::from_utf8(Vec::from(c)).unwrap();
-    let mut f = false;
 
-    let z = keys
-        .map(|i| {
-            let c = data.get(i).unwrap().clone();
-            let d = req_payload.clone();
-            let key = i.clone();
-            tokio::task::spawn(async move {
-                let x = c;
-                let b = d.contains(&x);
-                return (b, key);
-            })
-        })
-        .collect::<Vec<JoinHandle<(bool, String)>>>();
-    let result = futures::future::join_all(z).await;
+    let values = data.values()
+        .map(|v|
+            v
+        ).collect::<Vec<&String>>();
+    let ac = AhoCorasick::new(values);
 
-    let mut leaks = Vec::new();
-    for i in result {
-        if let Ok(v) = i {
-            if v.0 {
-                leaks.push(v.1);
-            }
-            f = f || v.0;
-        }
-    }
+    let leaks = ac.find_iter(&req_payload)
+        .map(|mat| {
+            let u  = *&mat.pattern();
+            let c = u;
+            keys[c].clone()
+        }).collect::<Vec<String>>();
+    let f = leaks.len() > 0;
+    // let z = keys
+    //     .map(|i| {
+    //         let c = data.get(i).unwrap().clone();
+    //         let d = req_payload.clone();
+    //         let key = i.clone();
+    //
+    //         tokio::task::spawn(async move {
+    //             let x = c;
+    //             let b = d.contains(&x);
+    //             return (b, key);
+    //         })
+    //     })
+    //     .collect::<Vec<JoinHandle<(bool, String)>>>();
+    // let result = futures::future::join_all(z).await;
+
+    // let mut leaks = Vec::new();
+    // for i in result {
+    //     if let Ok(v) = i {
+    //         if v.0 {
+    //             leaks.push(v.1);
+    //         }
+    //         f = f || v.0;
+    //     }
+    // }
 
     if f {
         let _ = _chan

@@ -1579,6 +1579,7 @@ name = "securum_exire_sever"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "aho-corasick",
  "clap",
  "colour",
  "data-encoding",
