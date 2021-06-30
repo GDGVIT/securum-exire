@@ -5,7 +5,7 @@ use crate::route::{check_leak::check,
                    unblock_endpoint::unblock_endpoint,
                    register_signal_server::register_signal_server
 };
-use crate::utils::{load_credentials, report_leak};
+use crate::utils::{load_credentials, report_leak, heartbeat};
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 
@@ -64,6 +64,7 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
         ()
     });
     let conf_clone = conf.clone();
+    heartbeat(conf.clone()).await;
     let listen_at = &conf.listening_port_address;
     let server = HttpServer::new(move || {
         App::new()

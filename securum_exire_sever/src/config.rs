@@ -23,7 +23,7 @@ fn sanitize_conf(conf: &Box<SecExireConf>) -> (bool, String) {
     let listening_port: String = conf.listening_port_address.clone();
     let signal_server_address: String = conf.signal_server_address.clone();
     let listening_address_regex = regex::Regex::new("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d{1,5}$").unwrap();
-    let signal_server_address_regex = regex::Regex::new("^https{0,1}://[\\.a-zA-Z0-9\\-]+:\\d{1,5}$").unwrap();
+    let signal_server_address_regex = regex::Regex::new("^[\\.a-zA-Z0-9\\-]+:{0,1}\\d{0,5}$").unwrap();
 
     if !listening_address_regex.is_match(listening_port.as_str()) {
         return (false, "error: invalid listening_port_address [USAGE: 0.0.0.0:9000]".to_string());

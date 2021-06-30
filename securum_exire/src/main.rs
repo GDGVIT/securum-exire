@@ -11,9 +11,37 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
     let lines_of_file = contents.split("\n").collect::<Vec<&str>>();
     let mut m = BTreeMap::new();
     for x in lines_of_file {
+        let mut x = x.trim().to_string();
+        let b = x.find("#");
+        let c = x.find("\"");
+        let d = x.rfind("\"");
+        if let Some(b) = b {
+            let halt_str_present = x.find("HALT_SCAN");
+            if let Some(d) = halt_str_present {
+                    if d > b {
+                        break;
+                    }
+            }
+            if c.is_some() && d.is_some() {
+               let c = c.unwrap();
+               let d = d.unwrap();
+               if !(b > c && b < d) {
+                   x = x.chars().take(b).collect::<String>();
+               } else {
+                   x = x.chars().take(d).collect::<String>();
+               }
+            } else {
+                x = x.chars().take(b).collect::<String>();
+            }
+
+        }
         let values = x.split("=").collect::<Vec<&str>>();
         if values.len() >= 2 {
-            m.insert(values[0].to_string(), values[1].to_string());
+            let key = values[0];
+            let value = values[1..].concat();
+            let key = key.trim_matches(&['"'] as &[_]).to_string();
+            let value = value.trim_matches(&['"'] as &[_]).to_string();
+            m.insert(key,value);
         }
     }
     Ok(m)
@@ -91,7 +119,9 @@ async fn main() {
     if let Ok(x) = cmd {
         if x.status.success() {
             let out = std::str::from_utf8(x.stdout.as_slice());
+
             if let Ok(soo) = out {
+                println!("{}", soo);
                 let mut paths = soo.split("\n").collect::<Vec<&str>>();
                 paths.resize(paths.len() - 1, "");
                 for p in paths {
@@ -111,6 +141,8 @@ async fn main() {
                 eprintln!("error while processing output from find!");
                 std::process::exit(1);
             }
+        } else {
+            std::process::exit(1);
         }
     } else {
         println!("Error occurred: {:?}", cmd.err())
