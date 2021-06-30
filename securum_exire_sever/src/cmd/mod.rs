@@ -7,7 +7,7 @@ pub fn parse_flags() -> String {
         .arg(Arg::new("deployment")
             .short('d')
             .long("deployment")
-            .value_name("deployment/production/staging")
+            .value_name("development/production/staging")
             .takes_value(true)
             .required(true)
             .about("takes in the type of deployment to check for in config file"))

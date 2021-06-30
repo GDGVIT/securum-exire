@@ -7,7 +7,6 @@ use std::ops::Deref;
 use redis::AsyncCommands;
 use crate::utils::{md5_encode, sha256_encode};
 use futures_util::StreamExt;
-use tokio::task::JoinHandle;
 use aho_corasick::AhoCorasick;
 
 pub async fn check(
