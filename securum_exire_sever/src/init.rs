@@ -14,7 +14,6 @@ use std::sync::{Arc, Mutex};
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::mpsc;
 use crate::leak_model::LeakModel;
-use futures::future::Either;
 use redis::{AsyncCommands, RedisResult};
 use crate::watcher::start_watcher;
 use crate::config::SecExireConf;
