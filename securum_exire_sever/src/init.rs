@@ -18,7 +18,7 @@ use futures::future::Either;
 use redis::{AsyncCommands, RedisResult};
 use crate::watcher::start_watcher;
 use crate::config::SecExireConf;
-
+use futures::future::FutureExt;
 pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::error::Error>> {
     let redis_client = redis::Client::open(conf.redis_url.clone())
         .expect("unable to connect to redis server");
@@ -30,7 +30,12 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
     let watcher_cred_copy = cred_share_obj.clone();
     let _w = start_watcher(watcher_cred_copy, conf.clone());
 
-    let mut stream = signal(SignalKind::interrupt())?;
+    let mut term_signal = signal(SignalKind::terminate())?;
+    let mut hang_signal = signal(SignalKind::hangup())?;
+    let mut quit_signal = signal(SignalKind::quit())?;
+    let mut interrupt_signal = signal(SignalKind::interrupt())?;
+
+
     let client_clone = redis_client.clone();
     let conf_clone = conf.clone();
     let handler = tokio::spawn(async move {
@@ -43,20 +48,34 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
         }
         let mut conn = conn.unwrap();
         loop {
-            let rec = rx.recv();
-            let hang = stream.recv();
-            futures::pin_mut!(rec);
-            futures::pin_mut!(hang);
-            match futures::future::select(rec, hang).await {
-                Either::Left((e, _)) => {
+            let rec = rx.recv().fuse();
+            let term_sig = term_signal.recv().fuse();
+            let int_sig = interrupt_signal.recv().fuse();
+            let quit_sig = quit_signal.recv().fuse();
+            let hang_sig = hang_signal.recv().fuse();
+            futures::pin_mut!(term_sig, int_sig, quit_sig, hang_sig, rec);
+            futures::select! {
+                e = rec => {
                     if let Some(v) = e {
                         let _ : RedisResult<()>= conn.set(v.payload_hash.clone(), true).await;
                         report_leak(&mut conn, &v, conf.clone()).await;
                         colour::e_yellow_ln!("leak detected: {:?}", v);
                     }
-                }
-                Either::Right(_) => {
-                    colour::e_green_ln!("hanging up the leaks handling task...");
+                },
+                _ = hang_sig => {
+                    colour::e_green_ln!("quiting leaks handling task...");
+                    break;
+                },
+                _ = term_sig => {
+                    colour::e_green_ln!("quiting leaks handling task...");
+                    break;
+                },
+                _ = quit_sig => {
+                    colour::e_green_ln!("quiting leaks handling task...");
+                    break;
+                },
+                _ = int_sig => {
+                    colour::e_green_ln!("quiting leaks handling task...");
                     break;
                 }
             };
