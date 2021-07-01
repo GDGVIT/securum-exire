@@ -1575,8 +1575,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "securum_exire_sever"
-version = "0.1.0"
+name = "securum_exire_server"
+version = "0.1.5"
 dependencies = [
  "actix-web",
  "aho-corasick",
