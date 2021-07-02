@@ -52,7 +52,95 @@
 - Redis
 - Telegram Bot
 
+## Steps to install and run
+
   
+- Extract the contents of installer.tar.gz<br>
+command: 
+```
+
+tar -xvf installer.tar.gz
+
+```
+
+- Change the permissions for install.sh<br>
+
+command:
+
+```
+
+chmod +x install.sh
+
+```
+
+  
+
+- Get the BOT UID and BOT SECRET from telegram bot [Securum Exire bot](http://t.me/SecurumExireBot)<br>
+
+  
+
+- Expose a port to public internet OR install ngrok (preferred for new users)
+
+  
+- Get public webhook ready.
+
+	- METHOD 1 (if you have a exposed post of your operating node):<br>
+
+		the webhook address will be: 
+  ```
+  http://<YOUR_PUBLIC_IP>:10000
+  ```
+
+	- METHOD 2 (ngrok method): <br>
+		command:<br>
+  ```bash
+  ngrok http 10000
+  ```
+  the webhook is the NGROK URL provided to you by ngrok cli
+
+-  Run the script<br>
+
+```
+
+./install.sh
+
+```
+
+  
+
+- Go to secumum exire install location <br>
+
+```
+
+cd $HOME/securum_exire
+
+```
+
+  
+
+- Start the service
+
+```
+
+./startup.sh
+
+``` 
+
+- Check the logs with
+
+```
+
+tail -f <LOCATION_PROMPTED_BY_STARTUP_SCRIPT>
+
+```
+
+  
+
+- Service is up and running.
+
+  
+
+- Use the [traefik-plugin-securum-exire](https://github.com/mayankkumar2/traefik-plugin-securum-exire) with traefik to utilize the service.
   
 
 ## Contributors
