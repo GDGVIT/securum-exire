@@ -84,7 +84,7 @@ chmod +x install.sh
   
 - Get public webhook ready.
 
-	- METHOD 1 (if you have a exposed post of your operating node):<br>
+	- METHOD 1 (if you have a exposed port of your operating node):<br>
 
 		the webhook address will be: 
   ```
