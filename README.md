@@ -40,7 +40,7 @@
 - [X] Environment variable scraping cli
   
 
-<br>
+
 ## Architecture Diagram
 ![image](https://user-images.githubusercontent.com/24864829/124398308-af0e8600-dd32-11eb-891c-3a1176b4b822.png)
   
