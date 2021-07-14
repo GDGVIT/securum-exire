@@ -56,7 +56,7 @@
 ## Steps to install and run
 
   
-- Extract the contents of installer.tar.gz<br>
+- Extract the contents of [installer.tar.gz](https://github.com/mayankkumar2/securum-exire/releases/download/v0.1.0/installer.gz.tar)<br>
 command: 
 ```
 
