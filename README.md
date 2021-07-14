@@ -21,14 +21,6 @@
 
 [![Discord Chat](https://img.shields.io/discord/760928671698649098.svg)](https://discord.gg/498KVdSKWR)
 
-  
-
-[![DOCS](https://img.shields.io/badge/Documentation-see%20docs-green?style=flat-square&logo=appveyor)](INSERT_LINK_FOR_DOCS_HERE)
-
-
-  
-  
-
 ## Features
 
 - [X] Telegram Bot to notify of leaks.
@@ -52,6 +44,7 @@
 - Traefik
 - Redis
 - Telegram Bot
+
 
 ## Steps to install and run
 
@@ -85,15 +78,15 @@ chmod +x install.sh
   
 - Get public webhook ready.
 
-	- METHOD 1 (if you have a exposed port of your operating node):<br>
+    - METHOD 1 (if you have a exposed port of your operating node):<br>
 
-		the webhook address will be: 
+        the webhook address will be: 
   ```
   http://<YOUR_PUBLIC_IP>:10000
   ```
 
-	- METHOD 2 (ngrok method): <br>
-		command:<br>
+    - METHOD 2 (ngrok method): <br>
+        command:<br>
   ```bash
   ngrok http 10000
   ```
@@ -142,7 +135,16 @@ tail -f <LOCATION_PROMPTED_BY_STARTUP_SCRIPT>
   
 
 - Use the [traefik-plugin-securum-exire](https://github.com/mayankkumar2/traefik-plugin-securum-exire) with traefik to utilize the service.
-  
+# Troubleshooting
+
+## Why is the secrets scan not working?
+
+### Securum exire scan tool
+-  If the contents of ```$HOME/.securum_exire/credentials.json``` are empty you can run the following command to populate the file with required credentials.
+```bash
+./securum_exire -o <PATH_TO_SCAN> -p ~/.securum_exire 
+Credentials written at path [/Users/mayankk/go/src/credentials.json]
+```
 
 ## Contributors
 
