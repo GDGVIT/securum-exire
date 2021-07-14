@@ -20,7 +20,11 @@
 [![Join Us](https://img.shields.io/badge/Join%20Us-Developer%20Student%20Clubs-red)](https://dsc.community.dev/vellore-institute-of-technology/)
 
 [![Discord Chat](https://img.shields.io/discord/760928671698649098.svg)](https://discord.gg/498KVdSKWR)
-
+## Linked Projects
+- [SecurumExireSignalServer](https://github.com/mayankkumar2/SecurumExireSignalServer) - Signal Server Implementation
+- [exirectl](https://github.com/mayankkumar2/exirectl) - Securum Exire Controller Implementation
+- [SecurumExireBot](https://github.com/mayankkumar2/SecurumExireBot) - Securum Exire Bot Implementation
+- [traefik-plugin-securum-exire](https://github.com/mayankkumar2/traefik-plugin-securum-exire) - Securum Exire Telegram Bot Implementation
 ## Features
 
 - [X] Telegram Bot to notify of leaks.
