@@ -18,22 +18,21 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
         if let Some(b) = b {
             let halt_str_present = x.find("HALT_SCAN");
             if let Some(d) = halt_str_present {
-                    if d > b {
-                        break;
-                    }
+                if d > b {
+                    break;
+                }
             }
             if c.is_some() && d.is_some() {
-               let c = c.unwrap();
-               let d = d.unwrap();
-               if !(b > c && b < d) {
-                   x = x.chars().take(b).collect::<String>();
-               } else {
-                   x = x.chars().take(d).collect::<String>();
-               }
+                let c = c.unwrap();
+                let d = d.unwrap();
+                if !(b > c && b < d) {
+                    x = x.chars().take(b).collect::<String>();
+                } else {
+                    x = x.chars().take(d).collect::<String>();
+                }
             } else {
                 x = x.chars().take(b).collect::<String>();
             }
-
         }
         let values = x.split("=").collect::<Vec<&str>>();
         if values.len() >= 2 {
@@ -41,7 +40,7 @@ async fn read_file(p: &str) -> Result<BTreeMap<String, String>, Box<dyn std::err
             let value = values[1..].concat();
             let key = key.trim_matches(&['"'] as &[_]).to_string();
             let value = value.trim_matches(&['"'] as &[_]).to_string();
-            m.insert(key,value);
+            m.insert(key, value);
         }
     }
     Ok(m)

@@ -1,13 +1,13 @@
 use crate::config::load_conf;
 use crate::init::start;
 
+mod cmd;
+pub mod config;
 mod init;
 mod leak_model;
 mod route;
 mod utils;
 mod watcher;
-pub mod config;
-mod cmd;
 
 #[actix_web::main]
 async fn main() {

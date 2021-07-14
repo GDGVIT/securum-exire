@@ -1,51 +1,64 @@
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;
 
-
-
-#[derive(Serialize, Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Conf {
     production: Option<SecExireConf>,
     development: Option<SecExireConf>,
-    staging: Option<SecExireConf>
+    staging: Option<SecExireConf>,
 }
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SecExireConf {
     pub redis_url: String,
     pub secrets_file_path: String,
     pub listening_port_address: String,
-    pub signal_server_address: String
+    pub signal_server_address: String,
 }
 
 fn sanitize_conf(conf: &Box<SecExireConf>) -> (bool, String) {
     let secrets_file_path: String = conf.secrets_file_path.clone();
     let listening_port: String = conf.listening_port_address.clone();
     let signal_server_address: String = conf.signal_server_address.clone();
-    let listening_address_regex = regex::Regex::new("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d{1,5}$").unwrap();
-    let signal_server_address_regex = regex::Regex::new("^[\\.a-zA-Z0-9\\-]+:{0,1}\\d{0,5}$").unwrap();
+    let listening_address_regex =
+        regex::Regex::new("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d{1,5}$").unwrap();
+    let signal_server_address_regex =
+        regex::Regex::new("^[\\.a-zA-Z0-9\\-]+:{0,1}\\d{0,5}$").unwrap();
 
     if !listening_address_regex.is_match(listening_port.as_str()) {
-        return (false, "error: invalid listening_port_address [USAGE: 0.0.0.0:9000]".to_string());
+        return (
+            false,
+            "error: invalid listening_port_address [USAGE: 0.0.0.0:9000]".to_string(),
+        );
     }
     if !signal_server_address_regex.is_match(signal_server_address.as_str()) {
-        return (false, "error: invalid signal_server_address [USAGE: http://localhost:9000]".to_string());
+        return (
+            false,
+            "error: invalid signal_server_address [USAGE: http://localhost:9000]".to_string(),
+        );
     }
     if !std::path::Path::new(&secrets_file_path).exists() {
-        return (false,format!("error: path[{}] secrets_file_path doesn't exist", secrets_file_path).to_string());
+        return (
+            false,
+            format!(
+                "error: path[{}] secrets_file_path doesn't exist",
+                secrets_file_path
+            )
+            .to_string(),
+        );
     }
 
     (true, "successful".to_string())
 }
 
-pub fn load_conf(env: String, config_loc: String) -> Arc<Box<SecExireConf>>{
+pub fn load_conf(env: String, config_loc: String) -> Arc<Box<SecExireConf>> {
     let res = std::fs::read_to_string(config_loc);
     if res.is_err() {
         colour::e_red_ln!("error: unable to open config file");
         std::process::exit(1);
     }
     let content = res.unwrap();
-    let cnf: Result<Conf, toml::de::Error> = toml::from_str(content.as_str()) ;
+    let cnf: Result<Conf, toml::de::Error> = toml::from_str(content.as_str());
     if cnf.is_err() {
         colour::e_red_ln!("error: malformed config structure");
         std::process::exit(1);

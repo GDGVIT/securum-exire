@@ -1,26 +1,24 @@
-use crate::route::{check_leak::check,
-                   check_endpoint_status::check_endpoint_status,
-                   block_endpoint::block_endpoint,
-                   get_all_blocked::get_all_blocked,
-                   unblock_endpoint::unblock_endpoint,
-                   register_signal_server::register_signal_server
+use crate::route::{
+    block_endpoint::block_endpoint, check_endpoint_status::check_endpoint_status,
+    check_leak::check, get_all_blocked::get_all_blocked,
+    register_signal_server::register_signal_server, unblock_endpoint::unblock_endpoint,
 };
-use crate::utils::{load_credentials, report_leak, heartbeat};
+use crate::utils::{heartbeat, load_credentials, report_leak};
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 
+use crate::config::SecExireConf;
+use crate::leak_model::LeakModel;
+use crate::watcher::start_watcher;
+use futures::future::FutureExt;
+use redis::{AsyncCommands, RedisResult};
 use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::mpsc;
-use crate::leak_model::LeakModel;
-use redis::{AsyncCommands, RedisResult};
-use crate::watcher::start_watcher;
-use crate::config::SecExireConf;
-use futures::future::FutureExt;
 pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::error::Error>> {
-    let redis_client = redis::Client::open(conf.redis_url.clone())
-        .expect("unable to connect to redis server");
+    let redis_client =
+        redis::Client::open(conf.redis_url.clone()).expect("unable to connect to redis server");
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let (tx, mut rx) = mpsc::channel::<LeakModel>(1024);
@@ -33,7 +31,6 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
     let mut hang_signal = signal(SignalKind::hangup())?;
     let mut quit_signal = signal(SignalKind::quit())?;
     let mut interrupt_signal = signal(SignalKind::interrupt())?;
-
 
     let client_clone = redis_client.clone();
     let conf_clone = conf.clone();
@@ -94,7 +91,10 @@ pub async fn start(conf: Arc<Box<SecExireConf>>) -> Result<(), Box<dyn std::erro
             .route("/check", web::post().to(check))
             .route("/check_endpoint", web::get().to(check_endpoint_status))
             .route("/block_endpoint", web::get().to(block_endpoint))
-            .route("/register_signal_server", web::get().to(register_signal_server))
+            .route(
+                "/register_signal_server",
+                web::get().to(register_signal_server),
+            )
             .route("/get_all_blocked_endpoints", web::get().to(get_all_blocked))
             .route("/unblock_endpoint", web::get().to(unblock_endpoint))
     })
