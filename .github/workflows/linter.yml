@@ -35,6 +35,8 @@ jobs:
     # Load all steps #
     ##################
     steps:
+      - name: install dependencies
+      - run: sudo apt update && sudo apt -u upgrade && sudo apt install -y gcc g++
       ##########################
       # Checkout the code base #
       ##########################
