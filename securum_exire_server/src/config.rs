@@ -51,6 +51,15 @@ fn sanitize_conf(conf: &Box<SecExireConf>) -> (bool, String) {
     (true, "successful".to_string())
 }
 
+fn check_success(conf: Box<SecExireConf>) -> Arc<Box<SecExireConf>> {
+    let (success, msg) = sanitize_conf(&conf);
+    if !success {
+        colour::e_red_ln!("{}", msg);
+        std::process::exit(1);
+    }
+    return Arc::new(conf);
+}
+
 pub fn load_conf(env: String, config_loc: String) -> Arc<Box<SecExireConf>> {
     let res = std::fs::read_to_string(config_loc);
     if res.is_err() {
@@ -70,37 +79,21 @@ pub fn load_conf(env: String, config_loc: String) -> Arc<Box<SecExireConf>> {
             std::process::exit(1);
         }
         let conf = Box::new(cnf.production.unwrap());
-        let (success, msg) = sanitize_conf(&conf);
-        if !success {
-            colour::e_red_ln!("{}", msg);
-            std::process::exit(1);
-        }
-        return Arc::new(conf);
+        return check_success(conf);
     } else if env.to_ascii_uppercase() == "DEVELOPMENT" {
         if cnf.development.is_none() {
             colour::e_red_ln!("error: development credentials not found!");
             std::process::exit(1);
         }
         let conf = Box::new(cnf.development.unwrap());
-        let (success, msg) = sanitize_conf(&conf);
-        if !success {
-            colour::e_red_ln!("{}", msg);
-            std::process::exit(1);
-        }
-        sanitize_conf(&conf);
-        return Arc::new(conf);
+        return check_success(conf);
     } else if env.to_ascii_uppercase() == "STAGING" {
         if cnf.development.is_none() {
             colour::e_red_ln!("error: development credentials not found!");
             std::process::exit(1);
         }
         let conf = Box::new(cnf.staging.unwrap());
-        let (success, msg) = sanitize_conf(&conf);
-        if !success {
-            colour::e_red_ln!("{}", msg);
-            std::process::exit(1);
-        }
-        return Arc::new(conf);
+        return check_success(conf);
     }
     colour::e_red_ln!("error: invalid env type flag [development/staging/production]");
     std::process::exit(1);
