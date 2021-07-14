@@ -1,0 +1,18 @@
+  
+http:
+  routers:
+      allbackendrouter:
+          rule: "Host(`localhost`)"
+          middlewares:
+            - my-traefik-plugin-securum-exire
+          service: allbackend
+  services:
+      allbackend:
+          loadBalancer:
+              servers:
+                  - url: "http://localhost:8000/"
+  middlewares:
+      my-traefik-plugin-securum-exire:
+          plugin:
+              traefik-plugin-securum-exire:
+                  url: "0.0.0.0:10012"

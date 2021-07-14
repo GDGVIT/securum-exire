@@ -1,0 +1,20 @@
+pilot:
+    token: "28da3f73-38a4-4d59-9bbe-338518b8f920"
+
+entryPoints:
+    unsecure:
+        address: :8081
+            
+
+
+providers:
+   # Enable the file provider to define routers / middlewares / services in file
+   file:
+      filename: backend.config.yaml
+      watch: true
+
+experimental:
+    plugins:
+        traefik-plugin-securum-exire:
+            moduleName: "github.com/mayankkumar2/traefik-plugin-securum-exire"
+            version: "v1.0.1"
