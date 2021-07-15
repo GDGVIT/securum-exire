@@ -1,0 +1,28 @@
+[package]
+name = "securum_exire_server"
+version = "0.1.5"
+authors = ["Mayank Kumar <mayank22oct@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.0.0-beta.5"
+env_logger = "0.8.3"
+serde_json = "1.0.64"
+hotwatch = "0.4.5"
+futures-util = "0.3.13"
+tokio = "1.4.0"
+futures = "0.3.13"
+ring = "0.17.0-alpha.10"
+data-encoding = "2.3.2"
+redis = { version = "0.20.2", features = ["tokio-comp"] }
+reqwest = { version = "0.11", features = ["json"]}
+serde = "1.0.126"
+md5 = "0.7.0"
+colour = "0.6.0"
+toml = "0.5.8"
+serde_derive = "1.0.126"
+regex = "1.5.4"
+clap = "3.0.0-beta.2"
+aho-corasick = "0.7"
